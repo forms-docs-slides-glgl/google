@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Unity WebGL Player | Granny 3</title>
+<link rel="shortcut icon" href="TemplateData/favicon.ico"/>
+<link rel="stylesheet" href="TemplateData/style.css"/>
+<script src="v2.8aefeab6f5856248078c.js"></script>
+</head>
+<body>
+<div id="unity-container" style="position: absolute; width: 100%; height: 100%; left: 0%; top: 0%;">
+<canvas id="unity-canvas" style="position: absolute; width: 100%; height: 100%"></canvas>
+<div id="unity-loading-bar" style="display: block;">
+    <div id="unity-logo"></div>
+    <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full" style="width: 0%;"></div>
+    </div>
+    <div id="loading-text" style="text-align: center; font-size: 16px; color: #000;">Please wait...</div>
+</div>
+<div id="unity-warning"> </div>
+</div>
+<script>
+YaGames.init().then(ysdk => {
+    console.log('Yandex SDK initialized');
+    window.ysdk = ysdk;
+    initPlayer();
+});
+
+var player;
+var myGameInstance = null;
+
+        let environmentData = {
+            language: "en",
+            domain: "default_domain",
+            deviceType: "desktop",
+            isMobile: false,
+            isDesktop: true,
+            isTablet: false,
+            isTV: false,
+            appID: "default_app_id",
+            browserLang: navigator.language || "en",
+            payload: null,
+            promptCanShow: false,
+            reviewCanShow: false,
+            platform: navigator.platform,
+            browser: (function() {
+                let userAgent = navigator.userAgent;
+                if (userAgent.includes("YaBrowser")) return "Yandex";
+                if (userAgent.includes("OPR") || userAgent.includes("Opera")) return "Opera";
+                if (userAgent.includes("Firefox")) return "Firefox";
+                if (userAgent.includes("MSIE") || userAgent.includes("Trident")) return "IE";
+                if (userAgent.includes("Edge")) return "Edge";
+                if (userAgent.includes("Chrome")) return "Chrome";
+                if (userAgent.includes("Safari")) return "Safari";
+                return "Other";
+            })()
+        };
+function initPlayer() {
+    return ysdk.getPlayer({ scopes: false }).then(_player => {
+        player = _player;
+        return player;
+    });
+}
+
+async function mergeFiles(parts) {
+    const blobs = await Promise.all(parts.map(part => fetch(part).then(res => res.blob())));
+    return URL.createObjectURL(new Blob(blobs));
+}
+
+async function initializeGame() {
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/bb0d9ecdb05db3e84da20bd14a4f84dc.loader.js";
+    
+    var dataParts = ["Build/fef8fdd7cfc9e5a5001034b01fa3647b_part0.data", "Build/fef8fdd7cfc9e5a5001034b01fa3647b_part1.data"];
+    var wasmParts = ["Build/bd8d511ba06d09159c93b032551b04fb_part0.wasm", "Build/bd8d511ba06d09159c93b032551b04fb_part1.wasm"];
+    
+    var loadingBar = document.querySelector("#unity-loading-bar");
+    var progressBarFull = document.querySelector("#unity-progress-bar-full");
+    loadingBar.style.display = "block";
+    
+    var dataUrl = await mergeFiles(dataParts);
+    var wasmUrl = await mergeFiles(wasmParts);
+    
+    var config = {
+        dataUrl: dataUrl,
+        frameworkUrl: buildUrl + "/e12dac5a3f5e3f677b009118afef20b7.framework.js",
+        codeUrl: wasmUrl,
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "Games Place",
+        productName: "Granny 3",
+        productVersion: "0.1",
+    };
+    
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = () => {
+        createUnityInstance(document.querySelector("#unity-canvas"), config, (progress) => {
+            progressBarFull.style.width = (100 * progress) + "%";
+        }).then((unityInstance) => {
+            myGameInstance = unityInstance;
+            setTimeout(() => { loadingBar.style.display = "none"; }, 500);
+        }).catch((message) => {
+            alert(message);
+        });
+    };
+    
+    document.body.appendChild(script);
+}
+
+initializeGame();
+</script>
+
+
+
+</body>
+</html>
